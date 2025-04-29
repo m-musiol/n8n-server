@@ -1,0 +1,8 @@
+m8m.duckdns.org {
+    route / {
+        basicauth {
+            admin $2a$14$Jk76XDbAYfc5x8qqk62wUOWTUSFv/RfoJFK9aioPT5UAEEWmXloYm
+        }
+        reverse_proxy n8n-docker_n8n_1:5678
+    }
+}

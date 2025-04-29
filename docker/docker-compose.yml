@@ -1,0 +1,13 @@
+version: "3.3"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    user: root
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Europe/Berlin
+    volumes:
+      - /opt/n8n:/home/node/.n8n
+    restart: always
