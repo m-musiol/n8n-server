@@ -6,7 +6,6 @@ Dieses Repository enthält eine vollständige Selfhosting-Anleitung für folgend
 - 🧠 [Lokale Sprachmodelle mit Ollama betreiben](docs/setup-ollama-local.md)
 - 🌐 [Caddy mit DuckDNS und HTTPS einrichten](docs/setup-caddy-https.md)
 - 📚 [Verwendete Sprachmodelle (Ollama)](docs/models/installed-models.md)
-- 📚 [Verwendete Sprachmodelle (Ollama)](docs/models/installed-models.md)
 
 
 ---
