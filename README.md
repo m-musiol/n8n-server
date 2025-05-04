@@ -2,9 +2,10 @@
 
 Dieses Repository enthält eine vollständige Selfhosting-Anleitung für folgende Komponenten:
 
-- 🧩 [n8n mit Docker installieren](docs/setup-n8n-docker.md)  
-- 🧠 [Lokale Sprachmodelle mit Ollama betreiben](docs/setup-ollama-local.md)  
+- 🧩 [n8n mit Docker installieren](docs/setup-n8n-docker.md)
+- 🧠 [Lokale Sprachmodelle mit Ollama betreiben](docs/setup-ollama-local.md)
 - 🌐 [Caddy mit DuckDNS und HTTPS einrichten](docs/setup-caddy-https.md)
+
 
 ---
 
