@@ -18,14 +18,16 @@ Diese Anleitung beschreibt die Einrichtung von n8n auf einem Raspberry Pi 5 mit 
 
 ## Projektstruktur
 
+```
 n8n-server/
-├── docker/ # Docker-Konfigurationen für n8n und Caddy
-│ ├── docker-compose.yml
-│ ├── docker-compose.caddy.yml
-│ └── Caddyfile
-├── docs/ # Dokumentation
-│ └── setup-n8n-docker.md
-└── workflows/ # Eigene n8n-Workflows als .json
+├── docker/           # Docker-Konfigurationen für n8n und Caddy
+│   ├── docker-compose.yml
+│   ├── docker-compose.caddy.yml
+│   └── Caddyfile
+├── docs/             # Dokumentation
+│   └── setup-n8n-docker.md
+└── workflows/        # Eigene n8n-Workflows als .json
+```
 
 ---
 
@@ -51,12 +53,15 @@ volumes:
 networks:
   n8n-network:
     external: true
+```
 
+---
 
 ## 2. Caddy als Reverse Proxy mit HTTPS
 
 **Datei:** `docker/docker-compose.caddy.yml`
 
+```yaml
 services:
   caddy:
     image: caddy:latest
@@ -79,42 +84,66 @@ volumes:
 networks:
   n8n-network:
     external: true
+```
+
+---
 
 ## 3. Zugangsschutz mit Passwort
 
 **Datei:** `docker/Caddyfile`
 
+```text
 m8m.duckdns.org {
     reverse_proxy n8n:5678
     basic_auth {
         admin <BCRYPT_HASH>
     }
 }
+```
 
-Den Hash kannst du mit folgendem Befehl generieren:
+**Hash generieren:**
+
+```bash
 docker run --rm -it caddy caddy hash-password
+```
+
+---
 
 ## 4. Netzwerk vorbereiten
 
-Falls noch nicht geschehen:
+Nur einmal erforderlich:
+
+```bash
 docker network create n8n-network
+```
+
+---
 
 ## 5. Container starten
 
+```bash
 cd /home/mm/n8n-server/docker
 docker compose -f docker-compose.yml up -d
 docker compose -f docker-compose.caddy.yml up -d
+```
+
+---
 
 ## 6. n8n per HTTPS erreichbar machen
 
-Rufe im Browser auf:
+Öffne im Browser:
+
+```
 https://<deine-subdomain>.duckdns.org
+```
 
-Beispiel:
-https://m8m.duckdns.org/
+Beispiel:  
+[https://m8m.duckdns.org/](https://m8m.duckdns.org/)
 
-Du wirst nach Benutzername und Passwort gefragt (admin + dein Passwort von Schritt 3).
+> Du wirst nach Benutzername und Passwort gefragt (`admin` + dein gewähltes Passwort aus Schritt 3).
 
-## Fertig!
+---
+
+## ✅ Fertig!
 
 n8n ist nun unter deiner DuckDNS-Adresse mit HTTPS und Passwortschutz erreichbar.
