@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   caddy:
     image: caddy:latest
@@ -9,13 +7,16 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /home/mm/Caddyfile:/etc/caddy/Caddyfile
+      - /home/mm/n8n-server/docker/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
-      - mm_default
-      - n8n-docker_default
+      - proxy-net
 
 networks:
-  mm_default:
+  proxy-net:
     external: true
-  n8n-docker_default:
-    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:

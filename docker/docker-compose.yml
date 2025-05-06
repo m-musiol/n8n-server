@@ -1,13 +1,19 @@
-version: "3.3"
-
 services:
   n8n:
     image: n8nio/n8n:latest
     user: root
+    container_name: n8n
     ports:
       - "5678:5678"
     environment:
       - GENERIC_TIMEZONE=Europe/Berlin
+      - N8N_SECURE_COOKIE=false
     volumes:
       - /opt/n8n:/home/node/.n8n
     restart: always
+    networks:
+      - proxy-net
+
+networks:
+  proxy-net:
+    external: true
