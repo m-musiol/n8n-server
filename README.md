@@ -40,9 +40,10 @@ Zugriff auf n8n:
 | n8n mit Docker starten              | [docs/setup-n8n-docker.md](docs/setup-n8n-docker.md)             |
 | Caddy mit HTTPS via DuckDNS         | [docs/setup-caddy-https.md](docs/setup-caddy-https.md)           |
 | Lokale LLMs mit Ollama              | [docs/setup-ollama-local.md](docs/setup-ollama-local.md)         |
-| Installierte LLMs (Übersicht)       | [docs/models/installed-models.md](docs/models/installed-models.md) |
+| Installierte LLMs (Übersicht)       | [docs/installed-models.md](docs/installed-models.md)             |
 | Dokumentenanalyse mit ChromaDB      | [docs/setup-docwatcher-chromadb.md](docs/setup-docwatcher-chromadb.md) |
 | Abfrage lokaler Dokumente mit LLMs  | [docs/query-documents-chromadb.md](docs/query-documents-chromadb.md) |
+| DocWatcher systemd-Dienst           | [docs/setup-docwatcher-service.md](docs/setup-docwatcher-service.md) |
 
 ---
 
@@ -52,14 +53,20 @@ Zugriff auf n8n:
 n8n-server/
 ├── docker/                        # Docker-Setups für n8n, Caddy, Ollama
 ├── docs/                          # Setup-Anleitungen
-│   ├── models/                    # Informationen zu installierten Modellen
-│   │   └── installed-models.md
-│   ├── setup-n8n-docker.md
+│   ├── installed-models.md
+│   ├── query-documents-chromadb.md
 │   ├── setup-caddy-https.md
-│   ├── setup-ollama-local.md
 │   ├── setup-docwatcher-chromadb.md
-│   └── query-documents-chromadb.md
-├── docwatch/                      # Dokumentenanalyse: OCR + Vektorspeicherung
+│   ├── setup-docwatcher-service.md
+│   ├── setup-n8n-docker.md
+│   └── setup-ollama-local.md
+├── scripts/                       # Python-Skripte (z. B. docwatcher, Tests)
+│   ├── docwatcher.py
+│   ├── list_collections.py
+│   ├── main.py
+│   ├── pdf_extractor.py
+│   └── query_test.py
+├── docwatch/                      # Dokumenten-Ein-/Ausgangsordner für PDF-Überwachung
 ├── workflows/                     # Beispielhafte n8n-Flows (optional)
 └── README.md                      # Diese Datei
 ```
