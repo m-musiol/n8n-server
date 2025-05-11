@@ -1,20 +1,8 @@
-# Installierte lokale Sprachmodelle
+# 📚 Installierte Modelle (Ollama)
 
-Dieses Dokument gibt einen Überblick über die auf dem Raspberry Pi 5 installierten LLMs (Large Language Models), die lokal via [Ollama](https://ollama.com) betrieben werden. Es werden sowohl die installierten Modelle als auch die Gründe für deren Auswahl genannt. Darüber hinaus werden Alternativen aufgezeigt.
+Dieses Dokument listet die speziell für diesen Anwendungszweck installierten KI-Modelle im Docker-Ollama-Setup auf. Die Modelle wurden manuell per API gezogen und stehen über den Ollama-Server unter `http://localhost:11434` zur Verfügung.
 
-⚠️ **Hinweis:** Dieses Repository ist öffentlich. Stelle sicher, dass keine vertraulichen Informationen preisgegeben werden.
-
----
-
-## Voraussetzungen
-
-* Docker ist installiert und funktionsfähig
-* Ollama läuft im Container auf Port `11434`
-* Genügend Speicherplatz für Modelle (je nach Modell mehrere GB)
-
----
-
-## Installierte Modelle
+## 📦 Aktuell installierte Modelle
 
 ### 1. `gemma:2b`
 
@@ -56,31 +44,28 @@ docker exec -it ollama ollama run gemma:2b
 docker exec -it ollama ollama run tinyllama
 ```
 
----
+## 📁 Speicherort
 
-## Alternative Modelle (nicht installiert)
+Die Modelle liegen standardmäßig im Docker-Volume `ollama`, das beim Starten des Containers automatisch angelegt wird:
 
-| Modell     | Größe    | Beschreibung                               | Bemerkung                     |
-| ---------- | -------- | ------------------------------------------ | ----------------------------- |
-| llama2:7b  | \~4 GB   | Gute Sprachqualität, von Meta              | Zu groß für Pi ohne SWAP      |
-| mistral:7b | \~4 GB   | Sehr gutes, schnelles Modell               | Nur mit 8+ GB RAM praktikabel |
-| phi:2      | \~1,5 GB | Kompakt, gute Ergebnisse im Benchmark      | Englisch fokussiert           |
-| orca-mini  | \~1,4 GB | Microsoft-Modell, gutes Instruction-Tuning | Kompatibel mit Ollama         |
+```bash
+volumes:
+  - ollama:/root/.ollama
+```
 
----
+## 🔁 Modellpflege
 
-## Empfehlung zur Auswahl
+### Aktualisieren eines Modells
 
-* **Für Produktivbetrieb auf Raspberry Pi 5:**
+```bash
+curl http://localhost:11434/api/pull -d '{"name": "tinyllama"}'
+```
 
-  * `gemma:2b` ist ein robuster Kompromiss zwischen Performance und Qualität.
+### Modell entfernen (wenn möglich)
 
-* **Für Experimente und Geschwindigkeit:**
+> Derzeit ist das Entfernen nicht direkt dokumentiert. Container-Reset entfernt auch Modelle.
 
-  * `tinyllama` ist eine hervorragende Wahl für schnelle Tests.
+## 📄 Referenzen
 
----
-
-## Ausblick
-
-Zukünftig könnten auch quantisierte Modelle im `ggml`- oder `gguf`-Format eingesetzt werden, um den RAM-Bedarf weiter zu reduzieren. Diese werden aktuell nicht über Ollama angeboten, könnten aber über `llama.cpp` eingebunden werden.
+* [Ollama Model Registry](https://ollama.com/library)
+* [API Referenz](https://ollama.com/docs/api)

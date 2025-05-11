@@ -14,6 +14,32 @@ services:
     networks:
       - proxy-net
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: always
+    networks:
+      - proxy-net
+
+  chromadb:
+    image: ghcr.io/abetlen/chroma:latest
+    container_name: chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma
+    restart: always
+    networks:
+      - proxy-net
+
+volumes:
+  ollama_data:
+  chroma_data:
+
 networks:
   proxy-net:
     external: true

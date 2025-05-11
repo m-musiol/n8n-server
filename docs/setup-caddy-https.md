@@ -1,105 +1,64 @@
-# Caddy mit DuckDNS und HTTPS
+# 🔐 Caddy mit HTTPS für n8n
 
-Diese Anleitung beschreibt die Einrichtung von Caddy als Reverse-Proxy mit automatischem HTTPS-Zertifikat über DuckDNS auf einem Raspberry Pi 5.
+Dieses Setup ermöglicht eine abgesicherte Verbindung per HTTPS mit automatischer Zertifikatsverwaltung über [Caddy](https://caddyserver.com/).
 
-⚠️ **Hinweis:** Diese Dokumentation ist öffentlich. Stelle sicher, dass keine vertraulichen Informationen preisgegeben werden. Passe die Werte z. B. für Domains und Passwörter entsprechend an.
+## 📁 Voraussetzungen
 
----
+* Domain mit A-Eintrag auf die IP-Adresse deines Raspberry Pi
+* Ports 80 und 443 sind offen und auf deinen Pi weitergeleitet (Port-Forwarding)
+* Docker & Docker Compose sind installiert
 
-## Voraussetzungen
+## 📦 Verwendete Dateien
 
-* Caddy ist per Docker installiert
-* Eine DuckDNS-Domain ist aktiv (z. B. `m8m.duckdns.org`)
-* Portweiterleitung (TCP 80 und 443) vom Router an die lokale IP des Raspberry Pi
-* Zugriff auf das bestehende Docker-Netzwerk, in dem z. B. `n8n` läuft
+* `docker-compose.caddy.yml`: Definiert den Caddy-Container
+* `Caddyfile`: Konfiguriert das Routing inkl. HTTPS für n8n
 
----
+## ⚙ Verzeichnisstruktur
 
-## 1. Caddy Docker-Setup
-
-**Datei:** `docker/docker-compose.caddy.yml`
-
-```yaml
-services:
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - n8n-network
-
-volumes:
-  caddy_data:
-  caddy_config:
-
-networks:
-  n8n-network:
-    external: true
+```bash
+n8n-server/
+├── docker-compose.yml                # Hauptkomposition
+├── docker-compose.caddy.yml         # Optionaler Caddy-Container
+├── Caddyfile                        # Konfiguration für Caddy
+└── docs/
+    ├── setup-n8n-docker.md
+    └── setup-caddy-https.md         # ← diese Datei
 ```
 
----
+## 🧰 Caddy Setup Schritt-für-Schritt
 
-## 2. Caddyfile mit Reverse Proxy und Basic Auth
+### 1. Konfigurationsdateien erstellen
 
-**Datei:** `docker/Caddyfile`
+#### `Caddyfile`
 
-```caddyfile
-m8m.duckdns.org {
-    reverse_proxy n8n:5678
-    basic_auth {
-        admin <BCRYPT_HASH>
-    }
+```Caddyfile
+n8n.example.com {
+  reverse_proxy n8n:5678
 }
 ```
 
-**Hinweis:**
+> Ersetze `n8n.example.com` durch deine eigene Domain.
 
-* Ersetze `m8m.duckdns.org` durch deine eigene Subdomain.
-* Ersetze `<BCRYPT_HASH>` durch einen sicheren Passwort-Hash.
-* Erstelle den Passwort-Hash mit:
+### 2. Caddy starten (zusätzlich zu deinem Haupt-Docker-Setup)
 
 ```bash
-docker run --rm -it caddy caddy hash-password
-```
-
----
-
-## 3. Netzwerk vorbereiten (falls nicht vorhanden)
-
-```bash
-docker network create n8n-network
-```
-
----
-
-## 4. Caddy starten
-
-```bash
-cd ~/n8n-server/docker
 docker compose -f docker-compose.caddy.yml up -d
 ```
 
----
+Caddy holt automatisch ein TLS-Zertifikat von Let's Encrypt und leitet den Verkehr auf Port 443 an den internen n8n-Container weiter.
 
-## 5. Zugriff testen
+## ✅ Test
 
-Im Browser aufrufen:
+1. Rufe deine Domain im Browser auf (`https://n8n.example.com`)
+2. Das n8n-Interface sollte über HTTPS erreichbar sein
 
-```
-https://<deine-subdomain>.duckdns.org
-```
+Wenn es nicht funktioniert, prüfe:
 
-Du solltest nun zur Eingabe von Benutzername (`admin`) und Passwort aufgefordert werden.
+* Ist die Domain korrekt konfiguriert?
+* Sind Ports 80 und 443 weitergeleitet?
+* Ist der Caddy-Container erfolgreich gestartet?
 
----
+## 📄 Referenzen
 
-## Fertig
-
-Caddy läuft nun als Reverse Proxy mit automatischer HTTPS-Konfiguration über Let's Encrypt und schützt den Zugriff mit Basic Auth.
+* [Caddy Dokumentation](https://caddyserver.com/docs/)
+* [n8n Dokumentation](https://docs.n8n.io/)

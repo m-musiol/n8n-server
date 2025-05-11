@@ -1,149 +1,69 @@
-# n8n Docker Setup
+# n8n mit Docker starten
 
-Diese Anleitung beschreibt die Einrichtung von n8n auf einem Raspberry Pi 5 mit Docker, inklusive Reverse-Proxy mit Caddy und automatischer HTTPS-Konfiguration via DuckDNS.
-
-⚠️ **Hinweis:** Diese Dokumentation ist öffentlich. Stelle sicher, dass keine vertraulichen Informationen preisgegeben werden. Passe deine Eingaben an den entsprechenden Stellen an.
+Diese Anleitung beschreibt, wie du n8n per Docker auf einem Raspberry Pi 5 lokal betreibst. Sie ist optimiert für das Setup in diesem Repository.
 
 ---
 
-## Voraussetzungen
+## 🧱 Voraussetzungen
 
-- Raspberry Pi 5 mit aktuellem Raspberry Pi OS
-- Docker & Docker Compose sind installiert
-- DuckDNS-Domain ist eingerichtet (z. B. `m8m.duckdns.org`)
-- GitHub-Zugriff (für Repository-Klon)
-- Freigabe der Ports 80 & 443 am Router auf die lokale IP des Raspberry Pi
+* Raspberry Pi 5 mit Raspberry Pi OS
+* Docker & Docker Compose installiert
+* n8n-Ordnerstruktur laut README eingerichtet
 
 ---
 
-## Projektstruktur
+## 🔧 Schritt-für-Schritt-Anleitung
 
-```
-n8n-server/
-├── docker/           # Docker-Konfigurationen für n8n und Caddy
-│   ├── docker-compose.yml
-│   ├── docker-compose.caddy.yml
-│   └── Caddyfile
-├── docs/             # Dokumentation
-│   └── setup-n8n-docker.md
-└── workflows/        # Eigene n8n-Workflows als .json
-```
-
----
-
-## 1. n8n per Docker installieren
-
-**Datei:** `docker/docker-compose.yml`
-
-```yaml
-services:
-  n8n:
-    image: n8nio/n8n:latest
-    restart: always
-    ports:
-      - "5678:5678"
-    volumes:
-      - n8n_data:/home/node/.n8n
-    networks:
-      - n8n-network
-
-volumes:
-  n8n_data:
-
-networks:
-  n8n-network:
-    external: true
-```
-
----
-
-## 2. Caddy als Reverse Proxy mit HTTPS
-
-**Datei:** `docker/docker-compose.caddy.yml`
-
-```yaml
-services:
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - n8n-network
-
-volumes:
-  caddy_data:
-  caddy_config:
-
-networks:
-  n8n-network:
-    external: true
-```
-
----
-
-## 3. Zugangsschutz mit Passwort
-
-**Datei:** `docker/Caddyfile`
-
-```text
-m8m.duckdns.org {
-    reverse_proxy n8n:5678
-    basic_auth {
-        admin <BCRYPT_HASH>
-    }
-}
-```
-
-**Hash generieren:**
+### 1. Repository klonen
 
 ```bash
-docker run --rm -it caddy caddy hash-password
+cd ~
+git clone https://github.com/m-musiol/n8n-server.git
+cd n8n-server/docker
 ```
 
----
+### 2. Konfiguration anpassen
 
-## 4. Netzwerk vorbereiten
-
-Nur einmal erforderlich:
+Erstelle die Konfigurationsdatei:
 
 ```bash
-docker network create n8n-network
+cp docker-compose.caddy.yml docker-compose.yml
 ```
 
----
+Optional: Passe `.env` für eigene Umgebungsvariablen an (z. B. für DuckDNS, n8n-User etc.).
 
-## 5. Container starten
+### 3. Container starten
 
 ```bash
-cd /home/mm/n8n-server/docker
-docker compose -f docker-compose.yml up -d
-docker compose -f docker-compose.caddy.yml up -d
+docker compose up -d
+```
+
+### 4. Zugriff auf n8n
+
+* **Lokal ohne HTTPS:** `http://localhost:5678`
+* **Über HTTPS mit Domain:** `https://deine-subdomain.duckdns.org` (wenn eingerichtet)
+
+---
+
+## 🛠 Nützliche Kommandos
+
+Logs anzeigen:
+
+```bash
+docker compose logs -f
+```
+
+Container stoppen:
+
+```bash
+docker compose down
 ```
 
 ---
 
-## 6. n8n per HTTPS erreichbar machen
+## 📌 Hinweise
 
-Öffne im Browser:
-
-```
-https://<deine-subdomain>.duckdns.org
-```
-
-Beispiel:  
-[https://m8m.duckdns.org/](https://m8m.duckdns.org/)
-
-> Du wirst nach Benutzername und Passwort gefragt (`admin` + dein gewähltes Passwort aus Schritt 3).
+* Wenn du HTTPS verwenden willst, richte [Caddy mit DuckDNS](./setup-caddy-https.md) ein.
+* Die n8n-Daten werden persistent gespeichert im Verzeichnis `~/.n8n` (wird im Volume gemountet).
 
 ---
-
-## ✅ Fertig!
-
-n8n ist nun unter deiner DuckDNS-Adresse mit HTTPS und Passwortschutz erreichbar.

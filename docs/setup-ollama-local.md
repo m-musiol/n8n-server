@@ -1,102 +1,69 @@
-# Lokale Installation von LLMs mit Ollama auf dem Raspberry Pi 5
+# 🧠 Ollama lokal mit Docker nutzen
 
-Diese Anleitung beschreibt die Einrichtung von Ollama zur lokalen Ausführung von Sprachmodellen (LLMs) wie **Gemma 2B** und **TinyLlama** auf einem Raspberry Pi 5.
+Dieses Setup beschreibt, wie du [Ollama](https://ollama.com/) lokal auf deinem Raspberry Pi (oder einem anderen Linux-System) im Docker-Container betreibst und per API ansteuerst.
 
-> ⚠️ **Hinweis:** Diese Dokumentation ist öffentlich. Stelle sicher, dass keine vertraulichen Informationen preisgegeben werden. Passe deine Eingaben entsprechend an.
+## 📁 Voraussetzungen
 
----
+* Docker & Docker Compose
+* ca. 4–8 GB RAM empfohlen (je nach Modell)
+* optional: Reverse Proxy (z. B. Caddy)
 
-## Voraussetzungen
+## 🧰 Schritt-für-Schritt
 
-- Raspberry Pi 5 mit aktuellem Raspberry Pi OS (64-Bit)
-- Docker ist installiert und funktionsfähig
-- Ca. 5–6 GB freier Arbeitsspeicher empfohlen (ZRAM oder Auslagerung ggf. aktivieren)
-- Internetverbindung für den Modell-Download
-- Optional: DuckDNS-Setup für API-Zugriff aus dem Netzwerk
+### 1. `docker-compose.ollama.yml` erstellen
 
----
-
-## Projektstruktur (Auszug)
-
-```plaintext
-n8n-server/
-├── docker/
-├── docs/
-│   └── setup-ollama-local.md
-└── workflows/
+```yaml
+disversion: '3.8'
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+volumes:
+  ollama:
 ```
 
----
+> Port 11434 ist der Standardport der Ollama-API.
 
-## Schritte zur Einrichtung
-
-### 1. Docker-Container starten
+### 2. Container starten
 
 ```bash
-docker pull ollama/ollama
-
-docker run -d \
-  -v ollama:/root/.ollama \
-  -p 11434:11434 \
-  --name ollama \
-  ollama/ollama
+docker compose -f docker-compose.ollama.yml up -d
 ```
 
-Nach dem Start ist der Ollama-Endpunkt unter `http://localhost:11434` erreichbar.
+### 3. Modell herunterladen
 
----
-
-### 2. Gemma 2B-Modell laden
+Beispiel für TinyLlama:
 
 ```bash
-docker exec -it ollama ollama run gemma:2b
+curl http://localhost:11434/api/pull -d '{"name": "tinyllama"}'
 ```
 
-Der Download kann einige Minuten dauern. Nach erfolgreichem Laden erscheint eine Eingabeaufforderung.
+Alternativ via UI (nur verfügbar, wenn aktiviert).
 
----
-
-### 3. TinyLlama-Modell laden
-
-```bash
-docker exec -it ollama ollama run tinyllama
-```
-
-Auch dieses Modell wird beim ersten Aufruf heruntergeladen und danach lokal ausgeführt.
-
----
-
-### 4. Zugriff über die API testen
-
-Beispielaufruf via `curl`:
+## 🧪 Testen
 
 ```bash
 curl http://localhost:11434/api/generate -d '{
-  "model": "gemma:2b",
-  "prompt": "Was ist der Sinn des Lebens?",
-  "stream": false
+  "model": "tinyllama",
+  "prompt": "Was ist der Sinn des Lebens?"
 }'
 ```
 
-Die Antwort erfolgt im JSON-Format und enthält den vom Modell generierten Text.
-
----
-
-### 5. Automatischer Start bei Systemstart (optional)
+## 📁 Beispielverzeichnis
 
 ```bash
-docker update --restart always ollama
+n8n-server/
+├── docker-compose.yml
+├── docker-compose.ollama.yml         # ← optionaler Container für Ollama
+└── docs/
+    └── setup-ollama-local.md         # ← diese Datei
 ```
 
----
+## 📄 Weiterführend
 
-## Nächstes Ziel
-
-Die lokal laufenden LLMs sollen später über n8n-Workflows angesteuert werden. Weitere Beispiele und Workflows folgen im Projektordner `workflows/`.
-
----
-
-## Weitere Informationen
-
-- [Ollama Dokumentation](https://ollama.com)
-- [Ollama API-Dokumentation](https://ollama.com/library)
+* [Ollama Docs](https://ollama.com/library)
+* [API Referenz](https://ollama.com/docs/api)
