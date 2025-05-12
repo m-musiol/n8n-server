@@ -1,88 +1,79 @@
-# 📂 Automatische Dokumentenanalyse mit `docwatcher`
+# DocWatcher: PDF-Analyse mit ChromaDB
 
-Dieses Setup automatisiert die Erkennung, Textextraktion und Indexierung von PDFs mit Hilfe von OCR und ChromaDB. Die Dokumente werden bei Eingang in einem Verzeichnis analysiert und indexiert, um später durchsuchbar zu sein.
+Diese Anleitung beschreibt, wie PDF-Dokumente automatisch verarbeitet, analysiert und in einer lokalen ChromaDB gespeichert werden. Das Setup ist für Raspberry Pi 5 mit laufender n8n-Instanz optimiert.
 
-## ✍þ Funktionen
+---
 
-* ✨ Automatische Erkennung neuer PDF-Dateien
-* 🔍 Text direkt oder via OCR (Tesseract)
-* 💾 Speicherung der Inhalte in einer lokalen ChromaDB-Instanz
-* 📁 Automatisches Verschieben nach erfolgreicher Verarbeitung
+## 🔧 Voraussetzungen
 
-## 📂 Verzeichnisstruktur
+* n8n läuft stabil (siehe [setup-n8n-docker.md](./setup-n8n-docker.md))
+* ChromaDB wird lokal per `~/start-chroma.sh` gestartet
+* Python-Umgebung mit `pymupdf`, `pytesseract`, `Pillow`, `sentence-transformers`, `chromadb` installiert
+* OCR ist optional via `tesseract-ocr` verfügbar
 
-```bash
-/home/mm/docwatch/
-├── inbox       # Eingang für neue PDFs
-├── processed   # Erfolgreich verarbeitete PDFs
-└── deleted    # Optionale Ablage für aussortierte Dateien
-```
+---
 
-## 🧱 Benötigte Pakete
+## 🔍 Funktion
 
-```bash
-sudo apt install tesseract-ocr
-pip install watchdog pymupdf pytesseract pdf2image chromadb
-```
+1. Neue PDFs werden in `/home/mm/docwatch/inbox/` abgelegt.
+2. Das Skript `store_doc.py` überprüft:
 
-## 🚀 Start der Komponenten
+   * ob es eine Text- oder Bild-PDF ist
+   * extrahiert ggf. Text via OCR
+   * speichert das Ergebnis in ChromaDB
+   * verschiebt die Datei nach `/home/mm/docwatch/processed/`
+3. Bei Löschung einer Datei in `processed` wird auch der Eintrag in ChromaDB entfernt (optional).
 
-### 1. ChromaDB manuell starten
+---
+
+## 🌐 Datenbank
+
+* Speicherort: standardgemäß `./chroma`
+* Zugriff via HTTP unter `http://localhost:8001`
+* Muss vor jedem `store_doc.py`-Lauf laufen
+
+---
+
+## 🔄 Beispielaufruf
 
 ```bash
 source ~/chromaenv/bin/activate
 ~/start-chroma.sh
+python3 /home/mm/n8n-server/scripts/store_doc.py /home/mm/docwatch/inbox/deindokument.pdf
 ```
 
-Dabei wird ChromaDB gestartet **und automatisch `docwatcher.service` aktiviert**, sobald der Port erreichbar ist.
+---
 
-### 2. Manuelle Ausführung (Testweise)
+## ⚖️ Integration in n8n
+
+* Nutze einen **Webhook**-Trigger in n8n
+* Übergebe Pfade als JSON an ein Shell-Skript oder einen Exec-Node
+* Beispiel:
+
+```json
+{
+  "file": "/home/mm/docwatch/inbox/test1.pdf"
+}
+```
+
+* oder per Shell:
 
 ```bash
-python3 /home/mm/chromaenv/docwatcher.py
+curl -X POST http://localhost:5678/webhook/trigger-docwatch -H "Content-Type: application/json" -d '{"file": "/home/mm/docwatch/inbox/test1.pdf"}'
 ```
 
-## ⚖ Indexierung in ChromaDB
+---
 
-* Indexiert werden PDF-Texte in der Collection `documents`
-* Bei leerem PDF-Inhalt erfolgt ein OCR-Fallback
-* Jede Datei wird eindeutig über ihren Dateinamen identifiziert
+## 🚫 Fehlerbehebung
 
-## ⚙ Systemdienst (optional)
+* Wenn ChromaDB nicht erreichbar ist: Stelle sicher, dass `start-chroma.sh` aktiv ist.
+* Bei `ModuleNotFoundError`: Aktiviere `chromaenv` und installiere fehlende Pakete
+* Wenn PDF nicht verarbeitet wird: Überprüfe, ob sie Text enthält (z. B. via `pdftotext`)
 
-`docwatcher.service` kann auch dauerhaft über systemd betrieben werden.
+---
 
-### Beispiel: `/etc/systemd/system/docwatcher.service`
+## 📅 ToDo / Erweiterungen
 
-```ini
-[Unit]
-Description=DocWatcher - Automatische PDF-Überwachung
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/home/mm/chromaenv/bin/python3 /home/mm/chromaenv/docwatcher.py
-Restart=always
-User=mm
-Environment=PYTHONUNBUFFERED=1
-
-[Install]
-WantedBy=multi-user.target
-```
-
-## 🔎 Beispielausgabe
-
-```bash
-[+] Neue Datei erkannt: inbox/scan_001.pdf
-[1] Versuche Text direkt zu extrahieren …
-[2] Kein Text gefunden. Starte OCR-Erkennung …
-🧠 Text per OCR erkannt
-📂 In ChromaDB gespeichert: scan_001.pdf
-📁 Verschoben nach: processed/scan_001.pdf
-```
-
-## 📃 Weitere Hinweise
-
-* OCR-Erkennung kann je nach PDF-Größe einige Sekunden dauern
-* Gespeicherte Inhalte sind anschließend über ChromaDB API durchsuchbar
-* Die automatische Ablage vermeidet doppelte Indexierungen
+* Automatische Löschung in ChromaDB bei Dateilöschung aus `processed`
+* Erweiterung für Metadaten (z. B. Importdatum, Erkennungsmethode)
+* Anbindung an Frage-Antwort-System (Query-Interface in n8n)

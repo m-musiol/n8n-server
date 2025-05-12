@@ -2,7 +2,7 @@
 
 Automatisierte Workflows mit [n8n](https://n8n.io) und lokaler KI-Unterstützung auf einem Raspberry Pi 5. Dieses Repository enthält:
 
-* ein Docker-Setup für n8n
+* ein Docker-Setup für n8n mit persistentem Login und Volume
 * HTTPS per Caddy + DuckDNS
 * lokale KI per Ollama (TinyLlama, Gemma)
 * automatische Dokumentenanalyse mit ChromaDB & Tesseract OCR
@@ -11,7 +11,11 @@ Automatisierte Workflows mit [n8n](https://n8n.io) und lokaler KI-Unterstützung
 
 ## 🤖 Ziel
 
-Eine lokal betriebene n8n-Instanz mit einfacher Konfiguration, erweiterbar durch lokale Sprachmodelle (LLMs) und eine dokumentenbasierte Vektordatenbank.
+Eine lokal betriebene n8n-Instanz mit einfacher Konfiguration, erweiterbar durch:
+
+* lokale Sprachmodelle (LLMs)
+* dokumentenbasierte Vektordatenbank (ChromaDB)
+* OCR und Langchain-fähige Promptverarbeitung
 
 ---
 
@@ -20,10 +24,16 @@ Eine lokal betriebene n8n-Instanz mit einfacher Konfiguration, erweiterbar durch
 ```bash
 cd docker
 cp docker-compose.caddy.yml docker-compose.yml
-# Optional: .env mit deinen Zugangsdaten ergänzen
+
+# Benutzer im Compose-File setzen:
+# user: "1000:1000"
+
+# Sicherstellen, dass das Volume vorbereitet ist:
+sudo mkdir -p /opt/n8n
+sudo chown 1000:1000 /opt/n8n
 
 # Starten
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 ```
 
 Zugriff auf n8n:
@@ -35,15 +45,15 @@ Zugriff auf n8n:
 
 ## 📚 Dokumentation
 
-| Thema                               | Pfad                                                             |
-| ----------------------------------- | ---------------------------------------------------------------- |
-| n8n mit Docker starten              | [docs/setup-n8n-docker.md](docs/setup-n8n-docker.md)             |
-| Caddy mit HTTPS via DuckDNS         | [docs/setup-caddy-https.md](docs/setup-caddy-https.md)           |
-| Lokale LLMs mit Ollama              | [docs/setup-ollama-local.md](docs/setup-ollama-local.md)         |
-| Installierte LLMs (Übersicht)       | [docs/installed-models.md](docs/installed-models.md)             |
-| Dokumentenanalyse mit ChromaDB      | [docs/setup-docwatcher-chromadb.md](docs/setup-docwatcher-chromadb.md) |
-| Abfrage lokaler Dokumente mit LLMs  | [docs/query-documents-chromadb.md](docs/query-documents-chromadb.md) |
-| DocWatcher systemd-Dienst           | [docs/setup-docwatcher-service.md](docs/setup-docwatcher-service.md) |
+| Thema                              | Pfad                                                                   |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| n8n mit Docker starten             | [docs/setup-n8n-docker.md](docs/setup-n8n-docker.md)                   |
+| Caddy mit HTTPS via DuckDNS        | [docs/setup-caddy-https.md](docs/setup-caddy-https.md)                 |
+| Lokale LLMs mit Ollama             | [docs/setup-ollama-local.md](docs/setup-ollama-local.md)               |
+| Installierte LLMs (Übersicht)      | [docs/installed-models.md](docs/installed-models.md)                   |
+| Dokumentenanalyse mit ChromaDB     | [docs/setup-docwatcher-chromadb.md](docs/setup-docwatcher-chromadb.md) |
+| Abfrage lokaler Dokumente mit LLMs | [docs/query-documents-chromadb.md](docs/query-documents-chromadb.md)   |
+| DocWatcher systemd-Dienst          | [docs/setup-docwatcher-service.md](docs/setup-docwatcher-service.md)   |
 
 ---
 
@@ -62,11 +72,27 @@ n8n-server/
 │   └── setup-ollama-local.md
 ├── scripts/                       # Python-Skripte (z. B. docwatcher, Tests)
 │   ├── docwatcher.py
-│   ├── list_collections.py
-│   ├── main.py
+│   ├── store_doc.py
+│   ├── query_documents.py
 │   ├── pdf_extractor.py
-│   └── query_test.py
+│   └── list_collections.py
 ├── docwatch/                      # Dokumenten-Ein-/Ausgangsordner für PDF-Überwachung
 ├── workflows/                     # Beispielhafte n8n-Flows (optional)
 └── README.md                      # Diese Datei
+```
+
+---
+
+## 📦 Hinweis zur Persistenz
+
+Damit alle Daten dauerhaft gespeichert werden (inkl. Login und Workflows), müssen:
+
+* der `user: "1000:1000"` korrekt gesetzt sein
+* das Volume `/opt/n8n` existieren und beschreibbar sein
+* die Registrierung mindestens einmal durchgeführt worden sein
+
+Zur Sicherung:
+
+```bash
+cp /opt/n8n/database.sqlite ~/n8n-backup.sqlite
 ```

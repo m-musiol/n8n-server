@@ -1,7 +1,7 @@
 services:
   n8n:
     image: n8nio/n8n:latest
-    user: root
+    user: "1000:1000"
     container_name: n8n
     ports:
       - "5678:5678"
@@ -25,16 +25,16 @@ services:
     networks:
       - proxy-net
 
-  chromadb:
-    image: ghcr.io/abetlen/chroma:latest
-    container_name: chromadb
-    ports:
-      - "8000:8000"
-    volumes:
-      - chroma_data:/chroma
-    restart: always
-    networks:
-      - proxy-net
+#  chromadb:
+#    image: ghcr.io/abetlen/chroma:latest
+#    container_name: chromadb
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      - chroma_data:/chroma
+#    restart: always
+#    networks:
+#      - proxy-net
 
 volumes:
   ollama_data:

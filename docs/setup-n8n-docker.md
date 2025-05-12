@@ -30,18 +30,40 @@ Erstelle die Konfigurationsdatei:
 cp docker-compose.caddy.yml docker-compose.yml
 ```
 
-Optional: Passe `.env` für eigene Umgebungsvariablen an (z. B. für DuckDNS, n8n-User etc.).
+Passe in `docker-compose.yml` den Benutzer:
 
-### 3. Container starten
-
-```bash
-docker compose up -d
+```yaml
+user: "1000:1000"
 ```
 
-### 4. Zugriff auf n8n
+→ Damit wird sichergestellt, dass n8n Schreibrechte im Verzeichnis `/opt/n8n` hat.
 
-* **Lokal ohne HTTPS:** `http://localhost:5678`
-* **Über HTTPS mit Domain:** `https://deine-subdomain.duckdns.org` (wenn eingerichtet)
+Optional: Passe `.env` für eigene Umgebungsvariablen an (z. B. für DuckDNS, n8n-User etc.).
+
+### 3. Volume vorbereiten
+
+```bash
+sudo mkdir -p /opt/n8n
+sudo chown 1000:1000 /opt/n8n
+```
+
+### 4. Container starten
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+```
+
+### 5. Registrierung durchführen
+
+Öffne `http://localhost:5678` im Browser und registriere einen neuen Benutzer.
+
+Anschließend sollten die Dateien `database.sqlite` und `config` im Volume `/opt/n8n` erscheinen:
+
+```bash
+ls -lh /opt/n8n
+```
+
+→ Jetzt ist das Setup dauerhaft funktionsfähig und benutzerverwaltet.
 
 ---
 
@@ -64,6 +86,9 @@ docker compose down
 ## 📌 Hinweise
 
 * Wenn du HTTPS verwenden willst, richte [Caddy mit DuckDNS](./setup-caddy-https.md) ein.
-* Die n8n-Daten werden persistent gespeichert im Verzeichnis `~/.n8n` (wird im Volume gemountet).
+* Die n8n-Daten werden persistent gespeichert im Verzeichnis `/opt/n8n`, das im Container unter `/home/node/.n8n` eingebunden ist.
+* Für ein Backup kannst du z. B. folgendes nutzen:
 
----
+```bash
+cp /opt/n8n/database.sqlite ~/n8n-backup.sqlite
+```
